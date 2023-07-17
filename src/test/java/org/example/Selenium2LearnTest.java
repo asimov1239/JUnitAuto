@@ -9,7 +9,8 @@ class Selenium2LearnTest {
     @Test
     void testTitle(){
         Selenium2Learn learning = new Selenium2Learn();
-        assertEquals("Swag Labs",learning.validateLogin());
+        assertEquals("Nope Labs",learning.validateLogin());
     }
+
 
 }
