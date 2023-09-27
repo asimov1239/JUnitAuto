@@ -33,6 +33,8 @@ class PryTest {
     String[] ensaios_exs = {"Alpha", "Beta", "Charlie", "delta", "Epsilon", "Foxtrot", "Gamma", "Hyperion", "ipsilon", "June", "Kappa", "Lambda", "Mu", "Nu", "Omicron", "Pi", "Queue", "Rho", "Sigma", "Tau",
     "Upsilon", "Phi", "chi", "psi" };
 
+    String[] perfis_exs = {"bonfim", "gabriel", "teste"};
+
     String cs_tab = "/html/body/app-root/app-contract-service/div/app-sidenav/div/mat-sidenav-container/mat-sidenav/div/button[2]/span[1]";
 
     String pick_random(String[] args){
@@ -45,9 +47,9 @@ class PryTest {
         driver.findElement(By.id("i0116")).sendKeys("gabriel@mbsoftgmail.onmicrosoft.com");
         driver.findElement(By.id("idSIButton9")).click();
         driver.findElement(By.id("i0118")).sendKeys("ipe@1999");
-        WebElement sign_in = driver.findElement(By.cssSelector("[value='Sign in']"));
+        WebElement sign_in = driver.findElement(By.cssSelector("[value='Entrar']"));
         sign_in.click();
-        WebElement yes = driver.findElement(By.cssSelector("[value='Yes']"));
+        WebElement yes = driver.findElement(By.cssSelector("[value='Sim']"));
         yes.click();
     }
 
@@ -136,7 +138,7 @@ class PryTest {
     @BeforeEach
     void setup() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--start-maximized");
+//        options.addArguments("--start-maximized");
         DesiredCapabilities chrome = new DesiredCapabilities();
 //        options.addArguments("--user-data-dir=C:\\Users\\gabriel.moraes\\AppData\\Local\\Google\\Chrome\\User Data");
         WebDriverManager.chromedriver().setup();
@@ -200,32 +202,41 @@ class PryTest {
         }
     }
 
+    void try_and_click(int n, WebElement button){
+        for (int i = 0; i < n; i++) {
+            try {
+                button.click();
+                System.out.println("Deu certo!");
+                break;
+            } catch (ElementClickInterceptedException e ) {
+                System.out.println("Interceptou o click!");
+            } catch (StaleElementReferenceException e) {
+                System.out.println("Não encontrou o elemento!");
+            } catch (Exception e) {
+                System.out.println("Erro!");
+            }
+        }
+    }
 
-
-    void limparEnsaio(){
+    void limparEnsaio(int limit){
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(100));
 
         List<WebElement> list = driver.findElements(By.tagName("tr"));
+        List<WebElement> deletes = driver.findElements(By.className("last-item"));
+        List<WebElement> icons;
 
-        for (int i = 0; i < 100; i++) {
-            wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.xpath("/html/body/app-root/app-essay/div/section/div[2]/table/tbody/tr[3]"))));
-        }
-
-        while (list.size() != 0) {
-            for (int j = 0; j < 5; j++) {
+        for (int i = 0; i < limit; i++) {
+            System.out.println("Rodei!");
+            if (deletes.size() > 0) {
+                icons = deletes.get(0).findElements(By.tagName("mat-icon"));
+                try_and_click(10, icons.get(1));
                 try {
-                    driver.findElement(By.xpath("/html/body/app-root/app-essay/div/section/div[2]/table/tbody/tr[1]/td[4]/div/mat-icon[2]")).click();
-                    break;
+                    try_and_click(10, driver.findElement(By.className("warn")));
                 } catch (Exception e) {
-
+                    continue;
                 }
+                deletes = driver.findElements(By.className("last-item"));
             }
-            try {
-                driver.findElement(By.className("warn")).click();
-            }catch (Exception e) {
-            }
-            list = driver.findElements(By.tagName("tr"));
-            System.out.println(list.size());
         }
 
     }
@@ -290,6 +301,32 @@ class PryTest {
 
     }
 
+    void mudarAbaUsuario(int aba_id) {
+        // Usuário -> 0
+        // Perfil -> 1
+        switch (aba_id) {
+            case 0:
+                try_and_click(10, driver.findElement(By.xpath("/html/body/app-root/app-user-profile/div/mat-tab-group/mat-tab-header/div/div/div/div[1]")));
+                break;
+            case 1:
+                try_and_click(10, driver.findElement(By.xpath("/html/body/app-root/app-user-profile/div/mat-tab-group/mat-tab-header/div/div/div/div[2]")));
+                break;
+        }
+
+
+    }
+
+    private void criarNovoPerfil() {
+        try {
+            try_and_click(10, driver.findElement(By.className("new-delete-profile")));
+        } catch (Exception e) {
+
+        }
+        System.out.println(driver.findElements(By.tagName("input")).size());
+        String perfil_nome = pick_random(perfis_exs);
+        driver.findElements(By.tagName("input")).get(3).sendKeys("perfil-" + perfil_nome);
+    }
+
     @Test
     void USR_01(){
         mudarAba(ABA.USUARIOS);
@@ -317,14 +354,11 @@ class PryTest {
 
     @Test
     void ENS_03(){
-        int n_target = 10;
+        int n_target = 20;
         mudarAba(ABA.ENSAIOS);
-//        limparEnsaio();
+        limparEnsaio(50);
         criarEnsaios(n_target);
-//        int n_ensaios = getRangeList();
-//        limparEnsaio();
-
-//        assertEquals(n_ensaios, getRangeList());
+        limparEnsaio(10);
     }
 
     @Test
@@ -342,6 +376,15 @@ class PryTest {
 //        limparEPIS();
         criarEPIS(n_target);
         assertEquals(0, driver.findElements(By.tagName("mat-row")).size());
+
+    }
+
+    @Test
+    void USR_PERFIL01(){
+        mudarAba(ABA.USUARIOS);
+        mudarAbaUsuario(1);
+        criarNovoPerfil();
+
 
     }
 
