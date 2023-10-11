@@ -110,23 +110,26 @@ class PryTest {
         CHAMADOS,
         ENSAIOS,
         MANUTENCAO,
+        EQUIPAMENTOS,
         USUARIOS,
         AJUDA,
     }
+
+    String[] abas_paths = {
+        "",
+        "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[2]/button",
+        "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[3]/button",
+        "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[4]/button",
+        "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[5]/button",
+        ""
+    };
+
     void mudarAba(ABA button_index) {
-        WebElement side_nav = driver.findElement(By.tagName("mat-sidenav"));
-        List<WebElement> buttons = side_nav.findElements(By.tagName("button"));
-        for (int j = 0; j < buttons.size(); j++) {
-            if (j == button_index.ordinal()) {
-                System.out.println("Teste");
-                for (int i = 0; i < 20; i++) {
-                    try {
-                        buttons.get(j).click();
-                    } catch (StaleElementReferenceException e) {
-                    }
-                }
-            }
-        }
+        System.out.println(button_index.ordinal());
+        System.out.println(abas_paths[button_index.ordinal()]);
+        WebElement button = driver.findElement(By.xpath(abas_paths[button_index.ordinal()]));
+        System.out.println(button);
+        try_and_click(10, button);
     }
 
     int getRangeList(){
@@ -148,6 +151,7 @@ class PryTest {
         driver = new ChromeDriver(options);
         driver.get("https://prylab.eldorado.org.br/PryLab-Front-QA/home");
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.findElement(By.tagName("button")).click();
         log_in_microsoft();
 //        zoom_out();
     }
@@ -167,6 +171,31 @@ class PryTest {
         assertEquals(20, driver.findElement(By.id("mat-input-0")).getText().length());
     }
 
+    String procurarAsteriscos() {
+        int count = 0;
+        List<WebElement> div = driver.findElements(By.tagName("div"));
+        List<WebElement> label = driver.findElements(By.tagName("label"));
+
+        for(int i = 0; i < div.size(); i++) {
+            try {
+                if (div.get(i).getText().contains("*")) {
+                    count += 1;
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        for(int i = 0; i < label.size(); i++) {
+            try {
+                if (div.get(i).getText().contains("*")) {
+                    count += 1;
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        return "Foram encontrados " + Integer.toString(count) + " asteriscos.";
+    }
 
     void clearChamados(){
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
@@ -202,20 +231,27 @@ class PryTest {
         }
     }
 
-    void try_and_click(int n, WebElement button){
+    boolean try_and_click(int n, WebElement button){
         for (int i = 0; i < n; i++) {
             try {
                 button.click();
                 System.out.println("Deu certo!");
-                break;
+                return true;
             } catch (ElementClickInterceptedException e ) {
                 System.out.println("Interceptou o click!");
+                return false;
             } catch (StaleElementReferenceException e) {
                 System.out.println("Não encontrou o elemento!");
+                return false;
+            } catch (NoSuchElementException e) {
+                System.out.println("Não encontrou o elemento!");
+                return false;
             } catch (Exception e) {
                 System.out.println("Erro!");
+                return false;
             }
         }
+        return false;
     }
 
     void limparEnsaio(int limit){
@@ -242,27 +278,25 @@ class PryTest {
     }
 
     void limparEPIS(){
-        List<WebElement> list = driver.findElements(By.tagName("mat-row"));
+        List<WebElement> list = driver.findElements(By.tagName("tr"));
+        System.out.println(list.size());
+        WebElement current_row;
 
-        while (list.size() != 0) {
-            for (int j = 0; j < 5; j++) {
-                try {
-                    list.get(0).findElements(By.tagName("mat-icon")).get(1).click();
-                    break;
-                } catch (Exception e) {
-
-                }
+        while (list.size() != 1) {
+            System.out.println("TAMANHO DA LISTA:" + Integer.toString(list.size()));
+            current_row = list.get(1).findElements(By.tagName("mat-icon")).get(1);
+            if (try_and_click(10, current_row)) {
+                try_and_click(10, driver.findElement(By.className("warn")));
             }
-            try {
-                driver.findElement(By.className("warn")).click();
-            }catch (Exception e) {
-            }
-            list = driver.findElements(By.tagName("mat-row"));
+            list = driver.findElements(By.tagName("tr"));
         }
     }
 
+    String add_epi = "/html/body/app-root/app-epi/div/div[3]/div[1]/button";
+    String epi_input = "/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/div/mat-form-field/div[1]/div/div[2]/input";
+    String epi_save = "/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/mat-dialog-actions/button[2]";
     void criarEPI(String nome) {
-        driver.findElement(By.className("add-epi-button")).click();
+        try_and_click(5, driver.findElement(By.xpath(add_epi)));
         try {
             driver.findElement(By.xpath("/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/div[1]/mat-form-field/div[1]/div[2]/div/input")).sendKeys(nome);
         }catch (Exception e) {
@@ -275,15 +309,15 @@ class PryTest {
 
         Random rnd = new Random();
         for (int i = 0; i < n; i++) {
-            driver.findElement(By.className("add-epi-button")).click();
+            driver.findElement(By.xpath(add_epi)).click();
             String nome = epi_exs[rnd.nextInt(epi_exs.length)];
             System.out.println(nome);
             try {
-                driver.findElement(By.xpath("/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/div[1]/mat-form-field/div[1]/div[2]/div/input")).sendKeys(nome);
+                driver.findElement(By.xpath(epi_input)).sendKeys(nome);
             }catch (Exception e) {
                 continue;
             }
-            driver.findElement(By.xpath("/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/div[2]/button[2]")).click();
+            driver.findElement(By.xpath(epi_save)).click();
         }
 
     }
@@ -330,6 +364,7 @@ class PryTest {
     @Test
     void USR_01(){
         mudarAba(ABA.USUARIOS);
+        procurarAsteriscos();
         WebElement titulo = driver.findElement(By.className("form-title"));
         String aba = titulo.findElement(By.tagName("label")).getText();
         assertEquals("Gerenciamento de usuários", aba);
@@ -338,7 +373,7 @@ class PryTest {
     @Test
     void CHM_03(){
         mudarAba(ABA.CHAMADOS);
-        WebElement titulo = driver.findElement(By.id("title"));
+        WebElement titulo = driver.findElement(By.className("form-title"));
         String aba = titulo.findElement(By.tagName("label")).getText();
         assertEquals("Contrato de Serviço", aba);
     }
@@ -347,7 +382,7 @@ class PryTest {
     @Test
     void ENS_01(){
         mudarAba(ABA.ENSAIOS);
-        WebElement titulo = driver.findElement(By.id("title"));
+        WebElement titulo = driver.findElement(By.className("form-title"));
         String aba = titulo.findElement(By.tagName("label")).getText();
         assertEquals("Ensaio", aba);
     }
@@ -364,7 +399,8 @@ class PryTest {
     @Test
     void EPI_01(){
         mudarAba(ABA.MANUTENCAO);
-        WebElement titulo = driver.findElement(By.id("form-title"));
+        System.out.println(procurarAsteriscos());
+        WebElement titulo = driver.findElement(By.className("form-title"));
         String aba = titulo.findElement(By.tagName("label")).getText();
         assertEquals("Equipamento de Proteção Individual", aba);
     }
@@ -372,20 +408,21 @@ class PryTest {
     @Test
     void EPI_03(){
         mudarAba(ABA.MANUTENCAO);
-        int n_target = 20;
-//        limparEPIS();
+        int n_target = 10;
+        limparEPIS();
         criarEPIS(n_target);
-        assertEquals(0, driver.findElements(By.tagName("mat-row")).size());
+        limparEPIS();
+        assertEquals(0, driver.findElements(By.tagName("tr")).size());
 
     }
+
 
     @Test
     void USR_PERFIL01(){
         mudarAba(ABA.USUARIOS);
+        procurarAsteriscos();
         mudarAbaUsuario(1);
         criarNovoPerfil();
-
-
     }
 
 
