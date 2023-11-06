@@ -30,8 +30,12 @@ class PryTest {
 
     String[] epi_exs = {"Óculos", "Luvas", "Roupa", "Teste", "Capacete", "Máscara","óculos", "luvas", "roupa", "capacete"};
 
+    String[] equip_exs = {"Óculos", "Luvas", "Roupa", "Teste", "Capacete", "Máscara","óculos", "luvas", "roupa", "capacete"};
+
     String[] ensaios_exs = {"Alpha", "Beta", "Charlie", "delta", "Epsilon", "Foxtrot", "Gamma", "Hyperion", "ipsilon", "June", "Kappa", "Lambda", "Mu", "Nu", "Omicron", "Pi", "Queue", "Rho", "Sigma", "Tau",
     "Upsilon", "Phi", "chi", "psi" };
+
+    String[] manufacturer_exs = {"Motorola", "Prysmian"};
 
     String[] perfis_exs = {"bonfim", "gabriel", "teste"};
 
@@ -111,6 +115,7 @@ class PryTest {
         ENSAIOS,
         MANUTENCAO,
         EQUIPAMENTOS,
+        NORMA,
         USUARIOS,
         AJUDA,
     }
@@ -121,14 +126,13 @@ class PryTest {
         "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[3]/button",
         "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[4]/button",
         "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[5]/button",
-        ""
+        "/html/body/app-root/app-home/div/app-sidebar/div/mat-sidenav-container/mat-sidenav/div/div[6]/button"
     };
 
     void mudarAba(ABA button_index) {
-        System.out.println(button_index.ordinal());
-        System.out.println(abas_paths[button_index.ordinal()]);
+        System.out.println(procurarAsteriscos());
+        System.out.println(driver.getCurrentUrl());
         WebElement button = driver.findElement(By.xpath(abas_paths[button_index.ordinal()]));
-        System.out.println(button);
         try_and_click(10, button);
     }
 
@@ -235,7 +239,7 @@ class PryTest {
         for (int i = 0; i < n; i++) {
             try {
                 button.click();
-                System.out.println("Deu certo!");
+//                System.out.println("Deu certo!");
                 return true;
             } catch (ElementClickInterceptedException e ) {
                 System.out.println("Interceptou o click!");
@@ -305,8 +309,11 @@ class PryTest {
         driver.findElement(By.xpath("/html/body/div[3]/div[2]/div/mat-dialog-container/div/div/div/div[2]/button[2]")).click();
     }
 
-    void criarEPIS(int n){
+    void criarNorma(String nome) {
 
+    }
+
+    void criarEPIS(int n){
         Random rnd = new Random();
         for (int i = 0; i < n; i++) {
             driver.findElement(By.xpath(add_epi)).click();
@@ -319,7 +326,6 @@ class PryTest {
             }
             driver.findElement(By.xpath(epi_save)).click();
         }
-
     }
 
     void criarEnsaios(int n){
@@ -361,6 +367,29 @@ class PryTest {
         driver.findElements(By.tagName("input")).get(3).sendKeys("perfil-" + perfil_nome);
     }
 
+    void criarEquip(int n) {
+        WebElement novo;
+        Random rand = new Random();
+        String date;
+        for (int i = 0; i < n; i++) {
+            novo = driver.findElement(By.className("above-table"));
+            novo.findElement(By.tagName("button")).click();
+            driver.findElement(By.id("description")).sendKeys(pick_random(equip_exs));
+            driver.findElement(By.id("model")).sendKeys(pick_random(ensaios_exs));
+            driver.findElement(By.id("room")).sendKeys("room-" + Integer.toString(rand.nextInt(10)));
+            driver.findElement(By.id("manufacturer")).sendKeys(pick_random(ensaios_exs) + Integer.toString(i));
+            driver.findElement(By.id("inventory")).sendKeys(Integer.toString(rand.nextInt(1000)));
+            matSelectInput("status");
+            date = Integer.toString(rand.nextInt(30)) + "/0" + Integer.toString(rand.nextInt(1,9));
+            System.out.println("Vencimento de Calibração " + date);
+            driver.findElement(By.name("calibrationValidity")).sendKeys(date);
+            matSelectInput("calibrationStatus");
+            driver.findElement(By.id("calibrationDaysToNotify")).sendKeys(Integer.toString(rand.nextInt(15)));
+            driver.findElement(By.className("form-buttons")).findElements(By.tagName("button")).get(1).click();
+        }
+        System.out.println(driver.findElements(By.tagName("input")).size());
+    }
+
     @Test
     void USR_01(){
         mudarAba(ABA.USUARIOS);
@@ -378,6 +407,19 @@ class PryTest {
         assertEquals("Contrato de Serviço", aba);
     }
 
+    @Test
+    void EQUIP_01(){
+        mudarAba(ABA.EQUIPAMENTOS);
+        WebElement titulo = driver.findElement(By.className("form-title"));
+        String aba = titulo.findElement(By.tagName("label")).getText();
+        assertEquals("Equipamentos", aba);
+    }
+
+    @Test
+    void EQUIP_02() {
+        mudarAba(ABA.EQUIPAMENTOS);
+        criarEquip(10);
+    }
 
     @Test
     void ENS_01(){
@@ -411,11 +453,18 @@ class PryTest {
         int n_target = 10;
         limparEPIS();
         criarEPIS(n_target);
-        limparEPIS();
+//        limparEPIS();
         assertEquals(0, driver.findElements(By.tagName("tr")).size());
 
     }
 
+    @Test
+    void NORMAS_01() {
+        mudarAba(ABA.NORMA);
+        WebElement novo = driver.findElement(By.className("above-table"));
+        novo.findElement(By.tagName("button")).click();
+    }
+    
 
     @Test
     void USR_PERFIL01(){
